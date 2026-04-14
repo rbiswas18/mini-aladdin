@@ -162,6 +162,18 @@ st.markdown(f"""
     /* ===== Plotly containers ===== */
     [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div,
     [data-testid="stPlotlyChart"] .main-svg {{ background: transparent !important; }}
+    /* ===== Top toolbar / header bar ===== */
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"] {{
+        background: {bg_color} !important;
+        color: {text_color} !important;
+    }}
+    [data-testid="stHeader"] * {{
+        color: {text_color} !important;
+    }}
+    [data-testid="stDecoration"] {{
+        background: {bg_color} !important;
+    }}
     /* ===== Tooltip icons ===== */
     [data-testid="stTooltipIcon"], [data-testid="stTooltipIcon"] svg,
     button[data-testid="stTooltipIcon"], .stTooltipIcon svg,
