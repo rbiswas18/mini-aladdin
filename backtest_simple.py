@@ -44,6 +44,8 @@ def run_backtest(
     initial_capital: float = 10_000.0,
     commission: float = 0.001,
     slippage: float = 0.001,
+    stop_loss_pct: float = 0.0,   # 0 = disabled, 0.05 = 5% stop loss
+    take_profit_pct: float = 0.0, # 0 = disabled, 0.10 = 10% take profit
 ) -> BacktestResult:
 
     df = fetch_data(symbol, start_date, end_date)
@@ -69,6 +71,14 @@ def run_backtest(
             entry_price = price
             entry_date = date
             cash = 0.0
+
+        # Stop loss / take profit check
+        if shares > 0 and entry_price > 0:
+            change_pct = (row["Close"] - entry_price) / entry_price
+            if stop_loss_pct > 0 and change_pct <= -stop_loss_pct:
+                signal = SELL  # force exit
+            elif take_profit_pct > 0 and change_pct >= take_profit_pct:
+                signal = SELL  # force exit
 
         # SELL
         elif signal == SELL and shares > 0:

@@ -114,6 +114,103 @@ class MACDStrategy(Strategy):
         return df
 
 
+class BollingerBandsStrategy(Strategy):
+    """
+    Bollinger Bands Breakout Strategy.
+    BUY when price touches lower band (oversold).
+    SELL when price touches upper band (overbought).
+    """
+    def __init__(self, window=20, std_dev=2.0):
+        super().__init__(window=window, std_dev=std_dev)
+        self.window = window
+        self.std_dev = std_dev
+
+    @property
+    def name(self):
+        return f"Bollinger Bands ({self.window}, {self.std_dev}σ)"
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self._validate_df(df)
+        indicator = ta.volatility.BollingerBands(
+            df["Close"], window=self.window, window_dev=self.std_dev
+        )
+        df["bb_upper"] = indicator.bollinger_hband()
+        df["bb_lower"] = indicator.bollinger_lband()
+        df["bb_mid"] = indicator.bollinger_mavg()
+        df["signal"] = HOLD
+        df.loc[df["Close"] <= df["bb_lower"], "signal"] = BUY
+        df.loc[df["Close"] >= df["bb_upper"], "signal"] = SELL
+        df.dropna(subset=["bb_upper", "bb_lower"], inplace=True)
+        return df
+
+
+class MomentumStrategy(Strategy):
+    """
+    Momentum Strategy.
+    BUY when price is making new N-day highs (strength).
+    SELL when price breaks below N-day low.
+    """
+    def __init__(self, window=20):
+        super().__init__(window=window)
+        self.window = window
+
+    @property
+    def name(self):
+        return f"Momentum ({self.window}d)"
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self._validate_df(df)
+        df["rolling_high"] = df["Close"].rolling(window=self.window).max()
+        df["rolling_low"] = df["Close"].rolling(window=self.window).min()
+        df["signal"] = HOLD
+        # BUY when today's close equals the N-day high (breakout)
+        breakout_up = df["Close"] >= df["rolling_high"]
+        breakout_down = df["Close"] <= df["rolling_low"]
+        df.loc[breakout_up, "signal"] = BUY
+        df.loc[breakout_down, "signal"] = SELL
+        df.dropna(subset=["rolling_high", "rolling_low"], inplace=True)
+        return df
+
+
+class CombinedSignalStrategy(Strategy):
+    """
+    Combined Signal Strategy — only trades when majority of strategies agree.
+    Higher confidence = higher win rate.
+    Uses MA Crossover + RSI + MACD voting.
+    """
+    def __init__(self, required_votes=2):
+        super().__init__(required_votes=required_votes)
+        self.required_votes = required_votes
+        self._strategies = [
+            MovingAverageCrossover(fast_period=10, slow_period=50),
+            RSIMeanReversion(rsi_period=14, oversold=35, overbought=65),
+            MACDStrategy(fast=12, slow=26, signal=9),
+        ]
+
+    @property
+    def name(self):
+        return f"Combined Signal ({self.required_votes}/3 votes)"
+
+    def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self._validate_df(df)
+        vote_df = pd.DataFrame(index=df.index)
+
+        for s in self._strategies:
+            try:
+                result = s.generate_signals(df.copy())
+                vote_df[s.name] = result["signal"].reindex(df.index).fillna(HOLD)
+            except Exception:
+                vote_df[s.name] = HOLD
+
+        buy_votes = (vote_df == BUY).sum(axis=1)
+        sell_votes = (vote_df == SELL).sum(axis=1)
+
+        df["signal"] = HOLD
+        df.loc[buy_votes >= self.required_votes, "signal"] = BUY
+        df.loc[sell_votes >= self.required_votes, "signal"] = SELL
+        return df
+
+
 STRATEGY_REGISTRY = {
     "MovingAverageCrossover": {
         "class": MovingAverageCrossover,
@@ -139,6 +236,27 @@ STRATEGY_REGISTRY = {
             "fast": {"type": "int", "min": 3, "max": 20, "default": 12},
             "slow": {"type": "int", "min": 10, "max": 50, "default": 26},
             "signal": {"type": "int", "min": 3, "max": 20, "default": 9},
+        },
+    },
+    "BollingerBands": {
+        "class": BollingerBandsStrategy,
+        "default_params": {"window": 20, "std_dev": 2.0},
+        "param_defs": {
+            "window": {"type": "int", "min": 5, "max": 50, "default": 20},
+        },
+    },
+    "Momentum": {
+        "class": MomentumStrategy,
+        "default_params": {"window": 20},
+        "param_defs": {
+            "window": {"type": "int", "min": 5, "max": 60, "default": 20},
+        },
+    },
+    "CombinedSignal": {
+        "class": CombinedSignalStrategy,
+        "default_params": {"required_votes": 2},
+        "param_defs": {
+            "required_votes": {"type": "int", "min": 1, "max": 3, "default": 2},
         },
     },
 }

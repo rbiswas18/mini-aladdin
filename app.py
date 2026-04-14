@@ -48,6 +48,9 @@ capital = st.sidebar.number_input("Capital ($)", min_value=100, value=10000, ste
 commission = st.sidebar.slider("Commission %", 0.0, 1.0, 0.1, 0.01) / 100
 slippage = st.sidebar.slider("Slippage %", 0.0, 1.0, 0.1, 0.01) / 100
 
+st.sidebar.subheader("Risk Management")
+stop_loss = st.sidebar.slider("Stop Loss %", 0, 20, 5) / 100
+take_profit = st.sidebar.slider("Take Profit %", 0, 50, 10) / 100
 run_btn = st.sidebar.button("🚀 Run Backtest", type="primary", use_container_width=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -63,7 +66,7 @@ with tab1:
         with st.spinner("Running backtest..."):
             try:
                 strategy = build_strategy(strategy_name, **user_params)
-                result = run_backtest(symbol, strategy, str(start_date), str(end_date), capital, commission, slippage)
+                result = run_backtest(symbol, strategy, str(start_date), str(end_date), capital, commission, slippage, stop_loss_pct=stop_loss, take_profit_pct=take_profit)
                 st.session_state["result"] = result
             except Exception as e:
                 st.error(f"Error: {e}")
