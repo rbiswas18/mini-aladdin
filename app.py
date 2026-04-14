@@ -162,6 +162,14 @@ st.markdown(f"""
     /* ===== Plotly containers ===== */
     [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div,
     [data-testid="stPlotlyChart"] .main-svg {{ background: transparent !important; }}
+    /* ===== Tooltip icons ===== */
+    [data-testid="stTooltipIcon"], [data-testid="stTooltipIcon"] svg,
+    button[data-testid="stTooltipIcon"], .stTooltipIcon svg,
+    [data-testid="stSidebar"] [data-testid="stTooltipIcon"] {{
+        color: {text_color} !important;
+        fill: {text_color} !important;
+        stroke: {text_color} !important;
+    }}
     /* ===== HR ===== */
     hr {{ border-color: {border_color}; }}
     /* ===== Verdict banners ===== */
