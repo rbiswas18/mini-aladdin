@@ -162,17 +162,30 @@ st.markdown(f"""
     /* ===== Plotly containers ===== */
     [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div,
     [data-testid="stPlotlyChart"] .main-svg {{ background: transparent !important; }}
-    /* ===== Top toolbar / header bar ===== */
-    header[data-testid="stHeader"],
-    [data-testid="stHeader"] {{
-        background: {bg_color} !important;
-        color: {text_color} !important;
+    /* ===== Hide Streamlit toolbar & branding completely ===== */
+    header[data-testid="stHeader"] {{
+        height: 0px !important;
+        min-height: 0px !important;
+        visibility: hidden !important;
     }}
-    [data-testid="stHeader"] * {{
-        color: {text_color} !important;
+    #MainMenu, footer, [data-testid="stToolbar"],
+    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {{
+        display: none !important;
+        visibility: hidden !important;
     }}
-    [data-testid="stDecoration"] {{
-        background: {bg_color} !important;
+    /* ===== Fix tooltip dots ===== */
+    [data-testid="stTooltipHoverTarget"] button,
+    [data-testid="tooltipHoverTarget"] button,
+    button[aria-label="Learn more"],
+    [data-baseweb="tooltip"] button {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+    [data-testid="stTooltipHoverTarget"] svg,
+    [data-testid="tooltipHoverTarget"] svg {{
+        fill: {text_color} !important;
+        color: {text_color} !important;
     }}
     /* ===== Tooltip icons ===== */
     [data-testid="stTooltipIcon"], [data-testid="stTooltipIcon"] svg,
