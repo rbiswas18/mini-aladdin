@@ -26,6 +26,58 @@ try:
 except ImportError:
     SIGNAL_HUB_AVAILABLE = False
 
+# ── Stock search utility ──────────────────────────────────────────────────────
+POPULAR_STOCKS = {
+    # Tech
+    "Apple": "AAPL", "Microsoft": "MSFT", "NVIDIA": "NVDA", "Alphabet": "GOOGL",
+    "Meta": "META", "Amazon": "AMZN", "Tesla": "TSLA", "Netflix": "NFLX",
+    "Adobe": "ADBE", "Salesforce": "CRM", "Intel": "INTC", "AMD": "AMD",
+    "Qualcomm": "QCOM", "Broadcom": "AVGO", "Texas Instruments": "TXN",
+    "Palantir": "PLTR", "Snowflake": "SNOW", "Datadog": "DDOG", "CrowdStrike": "CRWD",
+    # Finance
+    "JPMorgan Chase": "JPM", "Goldman Sachs": "GS", "Morgan Stanley": "MS",
+    "Bank of America": "BAC", "Wells Fargo": "WFC", "Visa": "V", "Mastercard": "MA",
+    "PayPal": "PYPL", "Square/Block": "SQ", "Berkshire Hathaway": "BRK-B",
+    # Healthcare
+    "Johnson & Johnson": "JNJ", "Pfizer": "PFE", "UnitedHealth": "UNH",
+    "Abbott Labs": "ABT", "Eli Lilly": "LLY", "Moderna": "MRNA", "Novo Nordisk": "NVO",
+    # Consumer
+    "Walmart": "WMT", "Costco": "COST", "Home Depot": "HD", "Nike": "NKE",
+    "McDonald's": "MCD", "Starbucks": "SBUX", "Coca-Cola": "KO", "PepsiCo": "PEP",
+    # Energy
+    "ExxonMobil": "XOM", "Chevron": "CVX", "ConocoPhillips": "COP",
+    # ETFs
+    "S&P 500 ETF": "SPY", "Nasdaq ETF": "QQQ", "Dow Jones ETF": "DIA",
+    "Small Cap ETF": "IWM", "Tech ETF": "XLK", "Finance ETF": "XLF",
+}
+
+# Reverse lookup: ticker -> name
+TICKER_TO_NAME = {v: k for k, v in POPULAR_STOCKS.items()}
+
+
+def stock_searchbox(label: str, key: str, default_ticker: str = "AAPL") -> str:
+    """
+    Renders a stock selector that accepts EITHER a company name OR a ticker.
+    Returns the ticker symbol.
+
+    Uses a selectbox with all popular stocks + a text input for custom tickers.
+    """
+    options = [f"{name} ({ticker})" for name, ticker in sorted(POPULAR_STOCKS.items())]
+    options.insert(0, "🔍 Enter custom ticker...")
+
+    default_name = TICKER_TO_NAME.get(default_ticker.upper(), "")
+    default_option = f"{default_name} ({default_ticker.upper()})" if default_name else options[0]
+    default_idx = options.index(default_option) if default_option in options else 0
+
+    selected = st.selectbox(label, options, index=default_idx, key=f"{key}_select")
+
+    if selected == "🔍 Enter custom ticker...":
+        custom = st.text_input("Enter ticker symbol", value=default_ticker, key=f"{key}_custom")
+        return custom.upper().strip()
+    else:
+        ticker = selected.split("(")[-1].rstrip(")")
+        return ticker.strip()
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Page config
 # ──────────────────────────────────────────────────────────────────────────────
@@ -290,11 +342,8 @@ st.sidebar.divider()
 st.sidebar.subheader("⚙️ Settings")
 
 # Stock ticker
-symbol = st.sidebar.text_input(
-    "Stock Ticker",
-    value=preset.get("symbol", "AAPL"),
-    help="Enter the stock symbol. Examples: AAPL (Apple), NVDA (Nvidia), TSLA (Tesla), MSFT (Microsoft)"
-).upper().strip()
+with st.sidebar:
+    symbol = stock_searchbox("Stock", "sidebar_symbol", default_ticker=preset.get("symbol", "AAPL"))
 
 # Date range
 col1, col2 = st.sidebar.columns(2)
@@ -613,7 +662,7 @@ with tab3:
     st.header("⚡ Live Price")
     st.caption("Get the latest price for any US stock.")
 
-    q = st.text_input("Stock Ticker", value="AAPL", help="Enter any US stock symbol").upper().strip()
+    q = stock_searchbox("Search Stock", "quote_symbol", "AAPL")
     if st.button("Fetch Latest Price", type="primary"):
         try:
             ticker = yf.Ticker(q)
@@ -656,7 +705,7 @@ with tab4:
 
     col1, col2 = st.columns(2)
     with col1:
-        val_symbol = st.text_input("Symbol", value=symbol, key="val_sym")
+        val_symbol = stock_searchbox("Symbol to validate", "val_symbol_search", symbol)
         val_strategy_name = st.selectbox("Strategy", list(COMBINED_REGISTRY.keys()), key="val_strat")
     with col2:
         val_splits = st.slider("Number of test periods", 3, 8, 4,
@@ -879,6 +928,7 @@ with tab6:
                 value="AAPL, NVDA, TSLA, MSFT, AMZN",
                 help="Enter the stocks you want to scan"
             )
+            st.caption("Enter ticker symbols (e.g. AAPL, NVDA) or use the search above to find tickers")
         with col2:
             min_nss = st.slider(
                 "Min NSS to trade", 0.1, 0.8, 0.3, 0.05,
@@ -997,7 +1047,7 @@ with tab7:
 
     col1, col2 = st.columns(2)
     with col1:
-        learn_symbol = st.text_input("Symbol", value="TSLA", key="learn_sym").upper().strip()
+        learn_symbol = stock_searchbox("Symbol", "learn_symbol_search", "TSLA")
         learn_strategy = st.selectbox("Strategy", list(COMBINED_REGISTRY.keys()), key="learn_strat")
     with col2:
         learn_years = st.slider("Years of history", 3, 15, 9, key="learn_years")
@@ -1148,6 +1198,7 @@ with tab8:
     col1, col2 = st.columns(2)
     with col1:
         pe_symbols_input = st.text_input("Watchlist", value="AAPL, NVDA, TSLA, MSFT", key="pe_symbols")
+        st.caption("Enter ticker symbols (e.g. AAPL, NVDA) or use the search above to find tickers")
         strategy_options = list(COMBINED_REGISTRY.keys())
         pe_default_index = strategy_options.index("CombinedSignal") if "CombinedSignal" in COMBINED_REGISTRY else 0
         pe_strategy = st.selectbox("Strategy", strategy_options, key="pe_strategy", index=pe_default_index)
