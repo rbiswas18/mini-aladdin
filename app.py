@@ -378,13 +378,15 @@ run_btn = st.sidebar.button("🚀 Run Backtest", type="primary", use_container_w
 # ──────────────────────────────────────────────────────────────────────────────
 # Tabs
 # ──────────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📊 Backtest",
     "⚖️ Compare All",
     "⚡ Live Quote",
     "🔬 Validate",
     "📖 Guide",
     "📡 Signal Hub",
+    "🧠 Learn & Optimize",
+    "🤖 Portfolio Engine",
 ])
 
 # ── Tab 1: Backtest ──────────────────────────────────────────────────────────
@@ -810,6 +812,46 @@ with tab5:
 
     st.divider()
 
+    st.subheader("🏆 How to Get the Best Results")
+    st.markdown("""
+    Follow this workflow every time you want to trade:
+
+    **Step 1 — 📡 Signal Hub first**
+    Run the Signal Hub scan on your watchlist. Only consider stocks with NSS ≥ 0.30.
+    If everything is HOLD, the market is saying "wait."
+
+    **Step 2 — 🔬 Validate the strategy**
+    Go to the Validate tab. Run walk-forward validation on your chosen stock + strategy.
+    Only trade if the verdict is ROBUST or MARGINAL. Never trade UNRELIABLE strategies.
+
+    **Step 3 — 📊 Backtest with realistic settings**
+    Set stop loss to 5-7%, take profit to 10-15%, capital to your real amount.
+    Check the equity curve — if the drawdown is more than you can stomach, don't trade it.
+
+    **Step 4 — 🧠 Optimize parameters**
+    Run the Learn & Optimize tab to find the best parameters for your stock.
+    Use the optimized params in your backtest before going live.
+
+    **Step 5 — 🤖 Paper trade first**
+    Use the Portfolio Engine tab in Dry Run mode for at least 2-4 weeks.
+    Only go live when paper results match backtest expectations.
+
+    **The golden rule:** If Signal Hub + Validate + Backtest all agree → HIGH CONFIDENCE.
+    If any one of them says no → WAIT.
+    """
+    )
+
+    st.divider()
+
+    st.subheader("📖 Understanding NSS Scores")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("NSS ≥ 0.50", "STRONG BUY", "High confidence")
+    col2.metric("NSS 0.30–0.50", "BUY", "Moderate confidence")
+    col3.metric("NSS < 0.30", "HOLD", "Not enough agreement")
+    st.caption("NSS = Normalized Signal Score. Combines 9 technical strategies + 5 fundamental providers. Range: -1.0 to +1.0")
+
+    st.divider()
+
     st.subheader("⚠️ Risk Warning")
     st.warning("""
     **Read this before trading real money:**
@@ -946,3 +988,266 @@ with tab6:
                     st.text("Report generation failed.")
         else:
             st.info("Click **Run Full Signal Scan** to analyze your watchlist.")
+
+
+# ── Tab 7: Learn & Optimize ──────────────────────────────────────────────────
+with tab7:
+    st.header("🧠 Learn & Optimize")
+    st.caption("The system analyzes your backtests, finds mistakes, and discovers better parameters")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        learn_symbol = st.text_input("Symbol", value="TSLA", key="learn_sym").upper().strip()
+        learn_strategy = st.selectbox("Strategy", list(COMBINED_REGISTRY.keys()), key="learn_strat")
+    with col2:
+        learn_years = st.slider("Years of history", 3, 15, 9, key="learn_years")
+
+    col3, col4 = st.columns(2)
+    run_analysis = col3.button("🔍 Run Full Analysis", type="primary", use_container_width=True)
+    run_optimize = col4.button("⚡ Optimize Parameters", use_container_width=True)
+
+    try:
+        from adaptive_learner import AdaptiveLearner, LearningJournal
+        ADAPTIVE_LEARNER_AVAILABLE = True
+    except ImportError:
+        ADAPTIVE_LEARNER_AVAILABLE = False
+        AdaptiveLearner = None
+        LearningJournal = None
+
+    if not ADAPTIVE_LEARNER_AVAILABLE:
+        st.error("Learn & Optimize is not available. Make sure adaptive_learner.py is in the same folder.")
+    else:
+        if run_analysis:
+            with st.spinner(f"Analyzing {learn_strategy} on {learn_symbol}..."):
+                try:
+                    learner = AdaptiveLearner(symbols=[learn_symbol], state_file="learning_journal.json")
+                    learn_result = learner.run_full_analysis(learn_symbol, learn_strategy, years_back=learn_years)
+                    st.session_state["learn_result"] = learn_result
+                except Exception as e:
+                    st.error(f"Analysis failed: {e}")
+
+        if run_optimize:
+            with st.spinner(f"Optimizing {learn_strategy} on {learn_symbol}..."):
+                try:
+                    learner = AdaptiveLearner(symbols=[learn_symbol], state_file="learning_journal.json")
+                    optimize_result = learner.optimize_and_learn(learn_symbol, learn_strategy, years_back=learn_years)
+                    st.session_state["optimize_result"] = optimize_result
+                except Exception as e:
+                    st.error(f"Optimization failed: {e}")
+
+        learn_result = st.session_state.get("learn_result")
+        if learn_result:
+            score_data = learn_result.get("strategy_score", {})
+            total_score = score_data.get("total_score", learn_result.get("metrics", {}).get("strategy_score", 0))
+            grade = score_data.get("grade", learn_result.get("metrics", {}).get("grade", "N/A"))
+            grade_colors = {
+                "A": "#00d4aa",
+                "B": "#4ade80",
+                "C": "#facc15",
+                "D": "#fb923c",
+                "F": "#ff4b4b",
+            }
+            grade_color = grade_colors.get(str(grade).upper(), "#C9D1D9")
+
+            score_col1, score_col2, score_col3 = st.columns([1, 1, 2])
+            score_col1.metric("Strategy Score", f"{total_score}/100")
+            score_col2.markdown(
+                f"""
+                <div style="background:{grade_color};padding:0.85rem 1rem;border-radius:12px;text-align:center;font-weight:800;color:#0E1117;">
+                    Grade: {grade}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            recommendation = score_data.get("recommendation")
+            if recommendation:
+                score_col3.info(recommendation)
+
+            failure_patterns = learn_result.get("failure_patterns", [])
+            if failure_patterns:
+                st.subheader("⚠️ Failure Patterns")
+                for pattern in failure_patterns:
+                    st.warning(pattern)
+
+            lessons = learn_result.get("improvement_suggestions", [])
+            if lessons:
+                st.subheader("💡 Lessons Learned")
+                for lesson in lessons:
+                    st.markdown(f"- {lesson}")
+
+        optimize_result = st.session_state.get("optimize_result")
+        if optimize_result:
+            st.subheader("⚙️ Best Parameters Found")
+            best_params = optimize_result.get("best_params", {})
+            if best_params:
+                st.dataframe(pd.DataFrame([
+                    {"Parameter": key, "Value": value} for key, value in best_params.items()
+                ]), use_container_width=True)
+            else:
+                st.info("No optimized parameters were returned.")
+
+            top_3 = optimize_result.get("top_3", [])
+            if top_3:
+                st.subheader("🏆 Top 3 Parameter Sets")
+                comparison_rows = []
+                for idx, item in enumerate(top_3, start=1):
+                    row = {"Rank": idx}
+                    if isinstance(item, dict):
+                        params = item.get("params", {})
+                        if isinstance(params, dict):
+                            row.update(params)
+                        for key, value in item.items():
+                            if key != "params":
+                                row[key] = value
+                    else:
+                        row["Result"] = item
+                    comparison_rows.append(row)
+                st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True)
+
+            overfit_warning = optimize_result.get("overfit_warning")
+            if overfit_warning:
+                st.warning(overfit_warning)
+
+        st.divider()
+        st.subheader("📚 Learning Journal")
+        try:
+            journal = LearningJournal("learning_journal.json")
+            best_backtests = journal.get_best_performing(5)
+            if best_backtests:
+                journal_rows = []
+                for item in best_backtests:
+                    metrics = item.get("metrics", {})
+                    journal_rows.append({
+                        "Symbol": item.get("symbol", ""),
+                        "Strategy": item.get("strategy_name", ""),
+                        "Score": metrics.get("strategy_score", 0),
+                        "Grade": metrics.get("grade", ""),
+                        "Return %": metrics.get("total_return", 0),
+                        "Sharpe": metrics.get("sharpe_ratio", 0),
+                    })
+                st.dataframe(pd.DataFrame(journal_rows), use_container_width=True)
+            else:
+                st.info("No journal entries yet. Run an analysis or optimization to start learning.")
+
+            journal_lessons = journal.get_lessons_learned()
+            if journal_lessons:
+                st.markdown("**Latest lessons learned**")
+                for lesson in journal_lessons[-10:]:
+                    st.markdown(f"- {lesson}")
+
+            with st.expander("📝 Full Journal Report"):
+                st.text(journal.generate_report())
+        except Exception as e:
+            st.warning(f"Could not load learning journal: {e}")
+
+# ── Tab 8: Portfolio Engine ──────────────────────────────────────────────────
+with tab8:
+    st.header("🤖 Portfolio Engine")
+    st.caption("Run the live trading engine, scans your watchlist and manages positions")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        pe_symbols_input = st.text_input("Watchlist", value="AAPL, NVDA, TSLA, MSFT", key="pe_symbols")
+        strategy_options = list(COMBINED_REGISTRY.keys())
+        pe_default_index = strategy_options.index("CombinedSignal") if "CombinedSignal" in COMBINED_REGISTRY else 0
+        pe_strategy = st.selectbox("Strategy", strategy_options, key="pe_strategy", index=pe_default_index)
+    with col2:
+        pe_capital = st.number_input("Account Capital ($)", value=1200, min_value=100, key="pe_capital")
+        pe_dry_run = st.checkbox("Dry Run (no real orders)", value=True, help="Safe mode, logs what it would do but places no orders")
+
+    col3, col4, col5 = st.columns(3)
+    run_scan_btn = col3.button("🔍 Run Scan", type="primary", use_container_width=True)
+    check_stops_btn = col4.button("🛑 Check Stops", use_container_width=True)
+    get_status_btn = col5.button("📊 Get Status", use_container_width=True)
+
+    try:
+        from portfolio_engine import PortfolioEngine
+        PORTFOLIO_ENGINE_AVAILABLE = True
+    except ImportError:
+        PORTFOLIO_ENGINE_AVAILABLE = False
+        PortfolioEngine = None
+
+    def _build_portfolio_engine(symbols, strategy_name, account_value):
+        return PortfolioEngine(symbols=symbols, strategy_name=strategy_name, account_value=float(account_value), paper_mode=True)
+
+    if not PORTFOLIO_ENGINE_AVAILABLE:
+        st.error("Portfolio Engine is not available. Make sure portfolio_engine.py is in the same folder.")
+    else:
+        parsed_symbols = [s.strip().upper() for s in pe_symbols_input.split(",") if s.strip()]
+
+        if run_scan_btn:
+            with st.spinner(f"Scanning {len(parsed_symbols)} symbols..."):
+                try:
+                    engine = _build_portfolio_engine(parsed_symbols, pe_strategy, pe_capital)
+                    execution_log = engine.execute_scan(dry_run=pe_dry_run)
+                    st.session_state["pe_last_log"] = execution_log
+                    st.session_state["pe_status"] = engine.get_status()
+                except Exception as e:
+                    st.error(f"Portfolio scan failed: {e}")
+
+        if check_stops_btn:
+            with st.spinner("Checking stops..."):
+                try:
+                    engine = _build_portfolio_engine(parsed_symbols, pe_strategy, pe_capital)
+                    closed_positions = engine.check_stops(dry_run=pe_dry_run)
+                    st.session_state["pe_closed_positions"] = closed_positions
+                    st.session_state["pe_status"] = engine.get_status()
+                except Exception as e:
+                    st.error(f"Stop check failed: {e}")
+
+        if get_status_btn:
+            try:
+                engine = _build_portfolio_engine(parsed_symbols, pe_strategy, pe_capital)
+                st.session_state["pe_status"] = engine.get_status()
+            except Exception as e:
+                st.error(f"Could not fetch status: {e}")
+
+        execution_log = st.session_state.get("pe_last_log")
+        if execution_log is not None:
+            st.subheader("🧾 Execution Log")
+            if execution_log:
+                st.dataframe(pd.DataFrame(execution_log), use_container_width=True)
+            else:
+                st.info("No actions were taken in the latest scan.")
+
+        closed_positions = st.session_state.get("pe_closed_positions")
+        if closed_positions is not None:
+            st.subheader("🛑 Closed Positions")
+            if closed_positions:
+                st.dataframe(pd.DataFrame(closed_positions), use_container_width=True)
+            else:
+                st.info("No stop loss or take profit triggers were hit.")
+
+        status = st.session_state.get("pe_status")
+        if status:
+            st.subheader("📊 Current Portfolio Status")
+            trade_journal_summary = status.get("trade_journal", {})
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Open Positions", status.get("open_count", 0))
+            c2.metric("Total PnL", f"${trade_journal_summary.get('total_pnl', 0):,.2f}")
+            c3.metric("Win Rate", f"{trade_journal_summary.get('win_rate', 0)}%")
+
+            risk_status = status.get("risk_status", {})
+            if risk_status:
+                st.markdown("**Risk Status**")
+                risk_rows = [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in risk_status.items()]
+                st.dataframe(pd.DataFrame(risk_rows), use_container_width=True)
+
+            open_positions = status.get("open_positions", {})
+            if open_positions:
+                st.markdown("**Open Positions**")
+                open_rows = []
+                for sym, pos in open_positions.items():
+                    row = {"Symbol": sym}
+                    if isinstance(pos, dict):
+                        row.update(pos)
+                    else:
+                        row["Details"] = pos
+                    open_rows.append(row)
+                st.dataframe(pd.DataFrame(open_rows), use_container_width=True)
+
+            if trade_journal_summary:
+                st.markdown("**Trade Journal Summary**")
+                summary_rows = [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in trade_journal_summary.items()]
+                st.dataframe(pd.DataFrame(summary_rows), use_container_width=True)
+
