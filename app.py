@@ -224,6 +224,27 @@ PRESETS = {
 # ──────────────────────────────────────────────────────────────────────────────
 # Sidebar
 # ──────────────────────────────────────────────────────────────────────────────
+# ── Top banner ──
+st.markdown(f"""
+<div style="
+    background: linear-gradient(90deg, #00d4aa 0%, #0066ff 100%);
+    padding: 18px 28px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+">
+    <div>
+        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">📈 Trading Alpha</h1>
+        <p style="color: rgba(255,255,255,0.85); margin: 4px 0 0 0; font-size: 14px;">AI-Powered Personal Trading System</p>
+    </div>
+    <div style="color: rgba(255,255,255,0.7); font-size: 13px; text-align: right;">
+        {'🌙 Dark Mode' if dark_mode else '☀️ Light Mode'}
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 st.sidebar.title("📈 Trading Alpha")
 st.sidebar.caption("Your Personal AI Trading System")
 
