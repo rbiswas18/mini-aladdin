@@ -6,3 +6,6 @@ data/cache/
 *.parquet
 paper_trades.json
 .DS_Store
+.cache/
+learning_journal.json
+portfolio_state.json
