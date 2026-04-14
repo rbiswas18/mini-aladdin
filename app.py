@@ -476,7 +476,7 @@ with tab4:
                 val_results = validator.run(
                     symbol=val_symbol,
                     strategy=val_strategy,
-                    start_date=str(date.today() - timedelta(days=4*365)),
+                    start_date=str(date.today() - timedelta(days=6*365)),
                     end_date=str(date.today() - timedelta(days=1)),
                     n_splits=val_splits,
                     initial_capital=val_capital,
