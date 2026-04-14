@@ -30,18 +30,67 @@ if "dark_mode" not in st.session_state:
 
 dark_mode = st.session_state["dark_mode"]
 chart_theme = "plotly_dark" if dark_mode else "plotly_white"
-bg_color = "#0e1117" if dark_mode else "#ffffff"
 
-# CSS injection for theme
-st.markdown(f"""
-<style>
-    .verdict-strong {{ background: #1a4731; border-left: 4px solid #00d4aa; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-    .verdict-moderate {{ background: #3d3010; border-left: 4px solid #ffa500; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-    .verdict-weak {{ background: #3d1010; border-left: 4px solid #ff4b4b; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-    .guide-box {{ background: {'#1e2530' if dark_mode else '#f0f2f6'}; padding: 16px; border-radius: 8px; margin: 8px 0; }}
-    .metric-label {{ font-size: 12px; color: {'#aaa' if dark_mode else '#666'}; }}
-</style>
-""", unsafe_allow_html=True)
+bg_color = "#0E1117" if dark_mode else "#FFFFFF"
+secondary_bg = "#161B22" if dark_mode else "#F3F6FA"
+sidebar_bg = "#111827" if dark_mode else "#F7F9FC"
+text_color = "#FAFAFA" if dark_mode else "#111827"
+muted_text = "#C9D1D9" if dark_mode else "#4B5563"
+border_color = "#30363D" if dark_mode else "#D1D5DB"
+
+st.markdown(
+    f"""
+    <style>
+        .stApp {{
+            background-color: {bg_color};
+            color: {text_color};
+        }}
+        section[data-testid="stSidebar"] {{
+            background-color: {sidebar_bg};
+            color: {text_color};
+            border-right: 1px solid {border_color};
+        }}
+        section[data-testid="stSidebar"] * {{
+            color: {text_color};
+        }}
+        .stMarkdown, .stText, .stCaption, label, p, span, div {{
+            color: {text_color};
+        }}
+        div[data-testid="stMetric"] {{
+            background-color: {secondary_bg};
+            border: 1px solid {border_color};
+            border-radius: 12px;
+            padding: 0.5rem 0.75rem;
+        }}
+        div[data-testid="stMetric"] label,
+        div[data-testid="stMetric"] div {{
+            color: {text_color};
+        }}
+        .stDataFrame, .stTable {{
+            background-color: {secondary_bg};
+            color: {text_color};
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            background-color: {secondary_bg};
+            color: {text_color};
+            border-radius: 8px 8px 0 0;
+            border: 1px solid {border_color};
+        }}
+        .stSelectbox > div > div,
+        .stNumberInput > div > div > input,
+        .stTextInput > div > div > input {{
+            background-color: {secondary_bg};
+            color: {text_color};
+        }}
+        hr {{ border-color: {border_color}; }}
+        .verdict-strong {{ background: #1a4731; border-left: 4px solid #00d4aa; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
+        .verdict-moderate {{ background: #3d3010; border-left: 4px solid #ffa500; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
+        .verdict-weak {{ background: #3d1010; border-left: 4px solid #ff4b4b; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
+        .guide-box {{ background: {secondary_bg}; padding: 16px; border-radius: 8px; margin: 8px 0; }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Quick Start Presets
@@ -75,8 +124,8 @@ st.sidebar.caption("Your Personal AI Trading System")
 
 # Theme toggle
 col_t1, col_t2 = st.sidebar.columns([1, 1])
-if col_t1.button("🌙 Dark" if not dark_mode else "☀️ Light", use_container_width=True):
-    st.session_state["dark_mode"] = not dark_mode
+if col_t1.button("☀️ Light" if dark_mode else "🌙 Dark", use_container_width=True):
+    st.session_state["dark_mode"] = not st.session_state["dark_mode"]
     st.rerun()
 
 st.sidebar.divider()
