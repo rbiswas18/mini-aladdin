@@ -45,6 +45,9 @@ st.markdown(
             background-color: {bg_color};
             color: {text_color};
         }}
+        .stApp, .stApp p, .stApp span, .stApp label, .stApp div {{
+            color: {text_color};
+        }}
         section[data-testid="stSidebar"] {{
             background-color: {sidebar_bg};
             color: {text_color};
@@ -53,7 +56,7 @@ st.markdown(
         section[data-testid="stSidebar"] * {{
             color: {text_color};
         }}
-        .stMarkdown, .stText, .stCaption, label, p, span, div {{
+        .stMarkdown, .stText, .stCaption, label, p, span {{
             color: {text_color};
         }}
         div[data-testid="stMetric"] {{
@@ -69,6 +72,7 @@ st.markdown(
         .stDataFrame, .stTable {{
             background-color: {secondary_bg};
             color: {text_color};
+            border-radius: 8px;
         }}
         .stTabs [data-baseweb="tab"] {{
             background-color: {secondary_bg};
@@ -76,17 +80,55 @@ st.markdown(
             border-radius: 8px 8px 0 0;
             border: 1px solid {border_color};
         }}
-        .stSelectbox > div > div,
-        .stNumberInput > div > div > input,
-        .stTextInput > div > div > input {{
-            background-color: {secondary_bg};
+        .stTabs [aria-selected="true"] {{
+            background-color: {bg_color};
             color: {text_color};
         }}
+        .stSelectbox > div > div,
+        .stNumberInput > div > div > input,
+        .stTextInput > div > div > input,
+        textarea {{
+            background-color: {secondary_bg} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        .stSelectbox [data-baseweb="select"] > div {{
+            background-color: {secondary_bg} !important;
+            color: {text_color} !important;
+            border-color: {border_color} !important;
+        }}
+        section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]) {{
+            background-color: {secondary_bg} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+        }}
+        section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]):hover {{
+            background-color: {"#1F2937" if dark_mode else "#E8EEF7"} !important;
+            color: {text_color} !important;
+        }}
         hr {{ border-color: {border_color}; }}
-        .verdict-strong {{ background: #1a4731; border-left: 4px solid #00d4aa; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-        .verdict-moderate {{ background: #3d3010; border-left: 4px solid #ffa500; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-        .verdict-weak {{ background: #3d1010; border-left: 4px solid #ff4b4b; padding: 12px 16px; border-radius: 6px; margin: 8px 0; }}
-        .guide-box {{ background: {secondary_bg}; padding: 16px; border-radius: 8px; margin: 8px 0; }}
+        .guide-box {{
+            background: {secondary_bg};
+            color: {text_color};
+            border: 1px solid {border_color};
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }}
+        .verdict-strong, .verdict-moderate, .verdict-weak {{
+            color: #FFFFFF !important;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 8px 0;
+        }}
+        .verdict-strong * , .verdict-moderate * , .verdict-weak * {{
+            color: #FFFFFF !important;
+        }}
+        .verdict-strong {{ background: {"#1a4731" if dark_mode else "#166534"}; border-left: 4px solid #00d4aa; }}
+        .verdict-moderate {{ background: {"#3d3010" if dark_mode else "#92400e"}; border-left: 4px solid #ffa500; }}
+        .verdict-weak {{ background: {"#3d1010" if dark_mode else "#991b1b"}; border-left: 4px solid #ff4b4b; }}
     </style>
     """,
     unsafe_allow_html=True,
