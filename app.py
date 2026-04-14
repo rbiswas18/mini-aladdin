@@ -1,5 +1,5 @@
 """
-app.py — Mini-Aladdin Trading Dashboard
+app.py — Trading Alpha Dashboard
 A beginner-friendly trading system for non-technical traders.
 Run with: streamlit run app.py
 """
@@ -17,7 +17,7 @@ from backtest_simple import run_backtest, compare_strategies, results_to_df, Bac
 # Page config
 # ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Mini-Aladdin Trading System",
+    page_title="Trading Alpha System",
     page_icon="📈",
     layout="wide",
 )
@@ -224,7 +224,7 @@ PRESETS = {
 # ──────────────────────────────────────────────────────────────────────────────
 # Sidebar
 # ──────────────────────────────────────────────────────────────────────────────
-st.sidebar.title("📈 Mini-Aladdin")
+st.sidebar.title("📈 Trading Alpha")
 st.sidebar.caption("Your Personal AI Trading System")
 
 # Theme toggle
@@ -687,12 +687,12 @@ with tab4:
 
 # ── Tab 5: Guide ──────────────────────────────────────────────────────────────
 with tab5:
-    st.header("📖 How to Use Mini-Aladdin")
+    st.header("📖 How to Use Trading Alpha")
 
     st.markdown('<div class="guide-box">', unsafe_allow_html=True)
     st.subheader("What is this tool?")
     st.write("""
-    Mini-Aladdin is a personal trading research system. It tests trading strategies on real 
+    Trading Alpha is a personal trading research system. It tests trading strategies on real 
     historical stock data so you can see how a strategy would have performed **before** risking 
     real money. Think of it as a flight simulator for trading — practice without crashing.
     """)
