@@ -55,24 +55,80 @@ POPULAR_STOCKS = {
 TICKER_TO_NAME = {v: k for k, v in POPULAR_STOCKS.items()}
 
 
+@st.cache_data(ttl=86400)  # Cache for 24 hours
+def load_stock_universe() -> dict:
+    """
+    Load S&P 500 + NASDAQ 100 + popular stocks from free sources.
+    Returns dict: {company_name: ticker}
+    Falls back to POPULAR_STOCKS if fetch fails.
+    """
+    import pandas as pd
+    import urllib.request
+
+    universe = dict(POPULAR_STOCKS)  # Start with hardcoded popular stocks
+
+    # Method 1: Fetch S&P 500 from Wikipedia
+    try:
+        sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+        tables = pd.read_html(sp500_url)
+        sp500_df = tables[0]
+        # Columns: 'Symbol', 'Security', 'GICS Sector', etc.
+        for _, row in sp500_df.iterrows():
+            name = str(row.get('Security', '')).strip()
+            ticker = str(row.get('Symbol', '')).strip().replace('.', '-')
+            if name and ticker and len(ticker) <= 5:
+                universe[name] = ticker
+    except Exception:
+        pass  # Fall back to popular stocks
+
+    # Method 2: Fetch NASDAQ 100 from Wikipedia
+    try:
+        ndx_url = "https://en.wikipedia.org/wiki/Nasdaq-100"
+        tables = pd.read_html(ndx_url)
+        # Find the table with ticker info
+        for table in tables:
+            if 'Ticker' in table.columns or 'Symbol' in table.columns:
+                ticker_col = 'Ticker' if 'Ticker' in table.columns else 'Symbol'
+                name_col = 'Company' if 'Company' in table.columns else 'Security'
+                if name_col in table.columns:
+                    for _, row in table.iterrows():
+                        name = str(row.get(name_col, '')).strip()
+                        ticker = str(row.get(ticker_col, '')).strip().replace('.', '-')
+                        if name and ticker and len(ticker) <= 5 and name != 'nan':
+                            universe[name] = ticker
+                    break
+    except Exception:
+        pass
+
+    return universe
+
+
 def stock_searchbox(label: str, key: str, default_ticker: str = "AAPL") -> str:
     """
-    Renders a stock selector that accepts EITHER a company name OR a ticker.
+    Stock selector with S&P 500 + NASDAQ 100 + popular stocks.
+    Search by company name or enter ticker directly.
     Returns the ticker symbol.
-
-    Uses a selectbox with all popular stocks + a text input for custom tickers.
     """
-    options = [f"{name} ({ticker})" for name, ticker in sorted(POPULAR_STOCKS.items())]
+    universe = load_stock_universe()
+    ticker_to_name = {v: k for k, v in universe.items()}
+
+    # Build display options sorted by name
+    options = [f"{name} ({ticker})" for name, ticker in sorted(universe.items())]
     options.insert(0, "🔍 Enter custom ticker...")
 
-    default_name = TICKER_TO_NAME.get(default_ticker.upper(), "")
-    default_option = f"{default_name} ({default_ticker.upper()})" if default_name else options[0]
-    default_idx = options.index(default_option) if default_option in options else 0
+    # Find default selection
+    default_ticker_upper = default_ticker.upper().strip()
+    default_name = ticker_to_name.get(default_ticker_upper, "")
+    default_option = f"{default_name} ({default_ticker_upper})" if default_name else None
+    default_idx = options.index(default_option) if default_option and default_option in options else 0
 
     selected = st.selectbox(label, options, index=default_idx, key=f"{key}_select")
 
     if selected == "🔍 Enter custom ticker...":
-        custom = st.text_input("Enter ticker symbol", value=default_ticker, key=f"{key}_custom")
+        custom = st.text_input(
+            "Enter ticker symbol", value=default_ticker_upper, key=f"{key}_custom",
+            help="Type any US stock ticker (e.g. AAPL, TSLA, NVDA)"
+        )
         return custom.upper().strip()
     else:
         ticker = selected.split("(")[-1].rstrip(")")
@@ -344,6 +400,8 @@ st.sidebar.subheader("⚙️ Settings")
 # Stock ticker
 with st.sidebar:
     symbol = stock_searchbox("Stock", "sidebar_symbol", default_ticker=preset.get("symbol", "AAPL"))
+    universe = load_stock_universe()
+    st.sidebar.caption(f"🔍 {len(universe):,} stocks searchable by name")
 
 # Date range
 col1, col2 = st.sidebar.columns(2)
@@ -1301,4 +1359,3 @@ with tab8:
                 st.markdown("**Trade Journal Summary**")
                 summary_rows = [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in trade_journal_summary.items()]
                 st.dataframe(pd.DataFrame(summary_rows), use_container_width=True)
-
