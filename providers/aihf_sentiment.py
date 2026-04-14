@@ -28,7 +28,9 @@ import re
 import time
 from html import unescape
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 from urllib.error import URLError
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
@@ -255,10 +257,13 @@ class SentimentProvider:
             raise RuntimeError("yfinance is not installed.") from exc
 
         ticker = yf.Ticker(symbol)
-        news_items = getattr(ticker, "news", None) or []
+        news_items = getattr(ticker, "news", None)
+        normalized_items = self._normalize_news_items(news_items)
 
         articles = []
-        for item in news_items[: self.max_articles]:
+        for item in normalized_items[: self.max_articles]:
+            if not isinstance(item, dict):
+                continue
             title = self._clean_text(item.get("title", ""))
             description = self._clean_text(
                 item.get("summary")
@@ -266,9 +271,48 @@ class SentimentProvider:
                 or item.get("content")
                 or ""
             )
+            publish_time = self._normalize_timestamp(
+                item.get("providerPublishTime")
+                or item.get("published_at")
+                or item.get("pubDate")
+            )
             if title:
-                articles.append({"title": title, "description": description})
+                article = {"title": title, "description": description}
+                if publish_time is not None:
+                    article["published_at"] = publish_time.isoformat()
+                articles.append(article)
         return articles
+
+    @staticmethod
+    def _normalize_news_items(news_items: Any) -> list[dict]:
+        if news_items is None:
+            return []
+        if isinstance(news_items, pd.DataFrame):
+            if news_items.empty:
+                return []
+            return news_items.to_dict(orient="records")
+        if isinstance(news_items, pd.Series):
+            if news_items.empty:
+                return []
+            values = news_items.tolist()
+            return [item for item in values if isinstance(item, dict)]
+        if isinstance(news_items, list):
+            return news_items
+        if isinstance(news_items, tuple):
+            return list(news_items)
+        return []
+
+    @staticmethod
+    def _normalize_timestamp(value: Any) -> Optional[pd.Timestamp]:
+        if value is None or value == "":
+            return None
+        try:
+            ts = pd.Timestamp(value)
+        except Exception:
+            return None
+        if ts.tzinfo is None:
+            return ts
+        return ts.tz_convert("UTC").tz_localize(None)
 
     def _init_vader(self):
         try:

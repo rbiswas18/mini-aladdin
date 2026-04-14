@@ -1,0 +1,157 @@
+{
+  "cache_version": 1,
+  "cached_at": "2026-04-14T17:35:08.003407",
+  "result": {
+    "as_of": "2026-04-14",
+    "bearish_count": 0,
+    "breakdown": [
+      {
+        "contribution": 0.0,
+        "name": "MovingAverageCrossover",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MovingAverageCrossover: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "contribution": 0.0,
+        "name": "RSIMeanReversion",
+        "signal": 0,
+        "source": "technical",
+        "summary": "RSIMeanReversion: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "contribution": 0.0,
+        "name": "MACDStrategy",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MACDStrategy: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "contribution": 0.0,
+        "name": "BollingerBands",
+        "signal": 0,
+        "source": "technical",
+        "summary": "BollingerBands: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "contribution": 0.0,
+        "name": "Momentum",
+        "signal": 0,
+        "source": "technical",
+        "summary": "Momentum: NEUTRAL",
+        "weight": 1.2
+      },
+      {
+        "contribution": 0.0,
+        "name": "CombinedSignal",
+        "signal": 0,
+        "source": "technical",
+        "summary": "CombinedSignal: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "contribution": 0.0,
+        "name": "TrendVolumeConfirmation",
+        "signal": 0,
+        "source": "technical",
+        "summary": "TrendVolumeConfirmation: NEUTRAL",
+        "weight": 1.0
+      },
+      {
+        "contribution": 0.0,
+        "name": "MeanReversionRegimeFilter",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MeanReversionRegimeFilter: NEUTRAL",
+        "weight": 1.0
+      },
+      {
+        "contribution": 0.0,
+        "name": "MultiTimeframeMomentum",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MultiTimeframeMomentum: NEUTRAL",
+        "weight": 1.2
+      }
+    ],
+    "bullish_count": 0,
+    "errors": [],
+    "neutral_count": 9,
+    "nss": 0.0,
+    "recommendation": "HOLD",
+    "regime": "UNKNOWN",
+    "should_trade": false,
+    "signals": [
+      {
+        "name": "MovingAverageCrossover",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MovingAverageCrossover: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "name": "RSIMeanReversion",
+        "signal": 0,
+        "source": "technical",
+        "summary": "RSIMeanReversion: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "name": "MACDStrategy",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MACDStrategy: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "name": "BollingerBands",
+        "signal": 0,
+        "source": "technical",
+        "summary": "BollingerBands: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "name": "Momentum",
+        "signal": 0,
+        "source": "technical",
+        "summary": "Momentum: NEUTRAL",
+        "weight": 1.2
+      },
+      {
+        "name": "CombinedSignal",
+        "signal": 0,
+        "source": "technical",
+        "summary": "CombinedSignal: NEUTRAL",
+        "weight": 0.8
+      },
+      {
+        "name": "TrendVolumeConfirmation",
+        "signal": 0,
+        "source": "technical",
+        "summary": "TrendVolumeConfirmation: NEUTRAL",
+        "weight": 1.0
+      },
+      {
+        "name": "MeanReversionRegimeFilter",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MeanReversionRegimeFilter: NEUTRAL",
+        "weight": 1.0
+      },
+      {
+        "name": "MultiTimeframeMomentum",
+        "signal": 0,
+        "source": "technical",
+        "summary": "MultiTimeframeMomentum: NEUTRAL",
+        "weight": 1.2
+      }
+    ],
+    "symbol": "AAPL",
+    "total_weight": 8.4,
+    "trade_direction": "HOLD"
+  }
+}

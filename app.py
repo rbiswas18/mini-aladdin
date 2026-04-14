@@ -20,6 +20,12 @@ except ImportError:
     COMBINED_REGISTRY = STRATEGY_REGISTRY
     build_pro_strategy = None
 
+try:
+    from signal_hub import SignalHub
+    SIGNAL_HUB_AVAILABLE = True
+except ImportError:
+    SIGNAL_HUB_AVAILABLE = False
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Page config
 # ──────────────────────────────────────────────────────────────────────────────
@@ -372,12 +378,13 @@ run_btn = st.sidebar.button("🚀 Run Backtest", type="primary", use_container_w
 # ──────────────────────────────────────────────────────────────────────────────
 # Tabs
 # ──────────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Backtest",
     "⚖️ Compare All",
     "⚡ Live Quote",
     "🔬 Validate",
     "📖 Guide",
+    "📡 Signal Hub",
 ])
 
 # ── Tab 1: Backtest ──────────────────────────────────────────────────────────
@@ -814,3 +821,128 @@ with tab5:
     - This tool is for research and education. It is NOT financial advice.
     - When in doubt, paper trade first. Always.
     """)
+
+# ── Tab 6: Signal Hub ────────────────────────────────────────────────────────
+with tab6:
+    st.header("📡 Signal Hub")
+    st.caption("Multi-signal aggregation — only trade when technicals + fundamentals + sentiment all agree")
+
+    if not SIGNAL_HUB_AVAILABLE:
+        st.error("Signal Hub not available. Make sure signal_hub.py is in the same folder.")
+    else:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            watchlist_input = st.text_input(
+                "Watchlist (comma-separated tickers)",
+                value="AAPL, NVDA, TSLA, MSFT, AMZN",
+                help="Enter the stocks you want to scan"
+            )
+        with col2:
+            min_nss = st.slider(
+                "Min NSS to trade", 0.1, 0.8, 0.3, 0.05,
+                help="Minimum signal strength to consider a trade. 0.30 = 60% of weighted signals agree"
+            )
+
+        use_providers = st.checkbox(
+            "Include Fundamentals + Sentiment + Valuation", value=True,
+            help="Adds fundamental analysis, news sentiment, and valuation checks. Slower but more accurate."
+        )
+
+        scan_btn = st.button("🔍 Run Full Signal Scan", type="primary", use_container_width=True)
+
+        if scan_btn:
+            symbols = [s.strip().upper() for s in watchlist_input.split(",") if s.strip()]
+            with st.spinner(f"Scanning {len(symbols)} stocks... (30-60 seconds)"):
+                try:
+                    hub = SignalHub(symbols=symbols, use_providers=use_providers)
+                    results = hub.scan()
+                    st.session_state["hub_results"] = results
+                    st.session_state["hub_symbols"] = symbols
+                    st.session_state["hub_min_nss"] = min_nss
+                    st.session_state["hub_use_providers"] = use_providers
+                except Exception as e:
+                    st.error(f"Scan failed: {e}")
+
+        results = st.session_state.get("hub_results")
+        if results:
+            symbols = st.session_state.get("hub_symbols", [])
+            min_nss_val = st.session_state.get("hub_min_nss", 0.3)
+            use_providers = st.session_state.get("hub_use_providers", use_providers)
+
+            candidates = [
+                (sym, data) for sym, data in results.items()
+                if abs(data.get("nss", 0)) >= min_nss_val and data.get("should_trade", False)
+            ]
+
+            if candidates:
+                st.success(f"✅ {len(candidates)} trade candidate(s) found!")
+                for sym, data in sorted(candidates, key=lambda x: abs(x[1].get("nss", 0)), reverse=True):
+                    nss = data.get("nss", 0)
+                    rec = data.get("recommendation", "HOLD")
+                    icon = "🟢" if nss > 0 else "🔴"
+                    st.markdown(f"### {icon} {sym} — {rec} (NSS: {nss:+.3f})")
+
+                    breakdown = data.get("aggregation", {}).get("breakdown", [])
+                    if breakdown:
+                        df_breakdown = pd.DataFrame([
+                            {
+                                "Signal": s.get("name", ""),
+                                "Vote": "🟢 BUY" if s.get("signal", 0) == 1 else "🔴 SELL" if s.get("signal", 0) == -1 else "⚪ HOLD",
+                                "Weight": s.get("weight", 0),
+                                "Detail": s.get("summary", "")[:60]
+                            }
+                            for s in breakdown
+                        ])
+                        st.dataframe(df_breakdown, use_container_width=True)
+            else:
+                st.info(f"No trade candidates found with NSS ≥ {min_nss_val:.2f}. Market conditions not aligned.")
+
+            st.divider()
+
+            st.subheader("📊 All Stocks — Signal Summary")
+            summary_rows = []
+            for sym, data in results.items():
+                nss = data.get("nss", 0)
+                agg = data.get("aggregation", {})
+                summary_rows.append({
+                    "Symbol": sym,
+                    "NSS": round(nss, 3),
+                    "Signal": data.get("recommendation", "HOLD"),
+                    "Bullish": agg.get("bullish_count", 0),
+                    "Bearish": agg.get("bearish_count", 0),
+                    "Neutral": agg.get("neutral_count", 0),
+                    "Regime": data.get("regime", "UNKNOWN"),
+                    "Trade?": "✅" if data.get("should_trade", False) else "❌",
+                })
+
+            df_summary = pd.DataFrame(summary_rows)
+            st.dataframe(df_summary, use_container_width=True)
+
+            fig = go.Figure()
+            colors = ["#00d4aa" if r["NSS"] > 0 else "#ff4b4b" for r in summary_rows]
+            fig.add_trace(go.Bar(
+                x=[r["Symbol"] for r in summary_rows],
+                y=[r["NSS"] for r in summary_rows],
+                marker_color=colors,
+                text=[r["Signal"] for r in summary_rows],
+                textposition="outside",
+            ))
+            fig.add_hline(y=min_nss_val, line_dash="dash", line_color="lime", annotation_text="Buy threshold")
+            fig.add_hline(y=-min_nss_val, line_dash="dash", line_color="red", annotation_text="Sell threshold")
+            fig.update_layout(
+                title="Normalized Signal Score (NSS) by Stock",
+                yaxis_title="NSS (-1 to +1)",
+                template="plotly_dark",
+                height=350,
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            with st.expander("📋 Full Text Report"):
+                try:
+                    hub = SignalHub(symbols=list(results.keys()), use_providers=use_providers)
+                    report = hub.format_report(results)
+                    st.text(report)
+                except Exception:
+                    st.text("Report generation failed.")
+        else:
+            st.info("Click **Run Full Signal Scan** to analyze your watchlist.")

@@ -8,8 +8,10 @@ analysis payload.
 from __future__ import annotations
 
 import time
+from datetime import datetime
 from typing import Any, Dict, Optional
 
+import pandas as pd
 import yfinance as yf
 
 
@@ -62,15 +64,14 @@ class ValuationProvider:
             ticker = yf.Ticker(normalized_symbol)
             info = ticker.info or {}
 
-            current_price = self._safe_float(
-                info.get("currentPrice")
-                or info.get("regularMarketPrice")
-                or info.get("previousClose")
+            current_price = self._first_valid_float(
+                info.get("currentPrice"),
+                info.get("regularMarketPrice"),
+                info.get("previousClose"),
             )
             if current_price is None or current_price <= 0:
                 hist = ticker.history(period="5d")
-                if not hist.empty:
-                    current_price = self._safe_float(hist["Close"].dropna().iloc[-1])
+                current_price = self._latest_close_from_history(hist)
 
             if current_price is None or current_price <= 0:
                 raise ValueError("Unable to determine current price")
@@ -297,7 +298,13 @@ class ValuationProvider:
         entry = self._cache.get(symbol)
         if not entry:
             return None
-        if time.time() - entry["timestamp"] > self.CACHE_TTL_SECONDS:
+
+        cached_at = self._normalize_cache_timestamp(entry.get("timestamp"))
+        if cached_at is None:
+            self._cache.pop(symbol, None)
+            return None
+
+        if time.time() - cached_at > self.CACHE_TTL_SECONDS:
             self._cache.pop(symbol, None)
             return None
         return entry["result"]
@@ -308,13 +315,77 @@ class ValuationProvider:
 
     @staticmethod
     def _safe_float(value: Any) -> Optional[float]:
-        """Safely convert a value to float."""
+        """Safely convert a scalar value to float."""
+        scalar = ValuationProvider._coerce_scalar(value)
         try:
-            if value is None:
+            if scalar is None:
                 return None
-            return float(value)
+            return float(scalar)
         except (TypeError, ValueError):
             return None
+
+    @staticmethod
+    def _coerce_scalar(value: Any) -> Any:
+        """Collapse pandas containers to a single scalar when possible."""
+        if value is None:
+            return None
+
+        if isinstance(value, pd.DataFrame):
+            if value.empty:
+                return None
+            if value.shape == (1, 1):
+                return value.iat[0, 0]
+            return None
+
+        if isinstance(value, pd.Series):
+            non_null = value.dropna()
+            if non_null.empty:
+                return None
+            if len(non_null) == 1:
+                return non_null.iloc[0]
+            return None
+
+        return value
+
+    @classmethod
+    def _first_valid_float(cls, *values: Any) -> Optional[float]:
+        """Return the first usable float from a list of candidate values."""
+        for value in values:
+            parsed = cls._safe_float(value)
+            if parsed is not None:
+                return parsed
+        return None
+
+    @classmethod
+    def _latest_close_from_history(cls, hist: Any) -> Optional[float]:
+        """Extract the latest close from yfinance history safely."""
+        if not isinstance(hist, pd.DataFrame) or hist.empty or "Close" not in hist.columns:
+            return None
+
+        history = hist.copy()
+        if isinstance(history.index, pd.DatetimeIndex) and history.index.tz is not None:
+            history.index = history.index.tz_localize(None)
+
+        close_series = history["Close"].dropna()
+        if close_series.empty:
+            return None
+
+        return cls._safe_float(close_series.iloc[-1])
+
+    @staticmethod
+    def _normalize_cache_timestamp(value: Any) -> Optional[float]:
+        """Normalize cache timestamps to epoch seconds for safe comparisons."""
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, pd.Timestamp):
+            timestamp = value.tz_localize(None) if value.tzinfo is not None else value
+            return timestamp.timestamp()
+        if isinstance(value, datetime):
+            timestamp = value.replace(tzinfo=None) if value.tzinfo is not None else value
+            return timestamp.timestamp()
+        return None
 
     @staticmethod
     def _error_result(symbol: str, error: str) -> dict:

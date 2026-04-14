@@ -10,6 +10,7 @@ import time
 from typing import Any, Dict, Optional
 
 import numpy as np
+import pandas as pd
 import yfinance as yf
 
 try:
@@ -53,10 +54,17 @@ class ARIMAForecastProvider:
 
         try:
             history = yf.Ticker(normalized_symbol).history(period=f"{max(lookback_days + 10, 30)}d")
+            history = self._normalize_history_frame(history)
             if history.empty or "Close" not in history:
                 raise ValueError("No price history available")
 
             closes = history["Close"].dropna().tail(lookback_days)
+            if isinstance(closes, pd.DataFrame):
+                if closes.empty:
+                    raise ValueError("No closing price history available")
+                closes = closes.iloc[:, 0]
+            elif isinstance(closes, pd.Series) and closes.empty:
+                raise ValueError("No closing price history available")
             if len(closes) < 20:
                 raise ValueError("Insufficient price history for forecast")
 
@@ -130,6 +138,30 @@ class ARIMAForecastProvider:
             result = self._error_result(normalized_symbol, str(exc))
             self._set_cache(cache_key, result)
             return result
+
+    @staticmethod
+    def _normalize_history_frame(history: Any) -> pd.DataFrame:
+        if history is None:
+            return pd.DataFrame()
+        if isinstance(history, pd.Series):
+            if history.empty:
+                return pd.DataFrame()
+            history = history.to_frame(name=history.name or "value")
+        if not isinstance(history, pd.DataFrame):
+            try:
+                history = pd.DataFrame(history)
+            except Exception:
+                return pd.DataFrame()
+        if history.empty:
+            return history
+
+        normalized = history.copy()
+        if isinstance(normalized.index, pd.DatetimeIndex):
+            if normalized.index.tz is not None:
+                normalized.index = normalized.index.tz_convert(None)
+            else:
+                normalized.index = normalized.index.tz_localize(None)
+        return normalized
 
     @staticmethod
     def _linear_regression_forecast(prices: np.ndarray) -> float:
