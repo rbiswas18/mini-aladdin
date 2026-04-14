@@ -23,190 +23,186 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Theme (Dark/Light)
+# Theme (Dark Mode Only)
 # ──────────────────────────────────────────────────────────────────────────────
-if "dark_mode" not in st.session_state:
-    st.session_state["dark_mode"] = True
+dark_mode = True
+chart_theme = "plotly_dark"
+bg_color = "#0E1117"
+secondary_bg = "#161B22"
+sidebar_bg = "#111827"
+text_color = "#FAFAFA"
+muted_text = "#C9D1D9"
+border_color = "#30363D"
 
-dark_mode = st.session_state["dark_mode"]
-chart_theme = "plotly_dark" if dark_mode else "plotly_white"
-
-bg_color = "#0E1117" if dark_mode else "#FFFFFF"
-secondary_bg = "#161B22" if dark_mode else "#F3F6FA"
-sidebar_bg = "#111827" if dark_mode else "#F7F9FC"
-text_color = "#FAFAFA" if dark_mode else "#111827"
-muted_text = "#C9D1D9" if dark_mode else "#4B5563"
-border_color = "#30363D" if dark_mode else "#D1D5DB"
-
-st.markdown(f"""
+st.markdown("""
 <style>
     /* ===== Global app surfaces ===== */
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"],
     [data-testid="stMainBlockContainer"],
-    .main, section.main, .block-container {{
-        background: {bg_color} !important;
-        color: {text_color} !important;
-    }}
+    .main, section.main, .block-container {
+        background: #0E1117 !important;
+        color: #FAFAFA !important;
+    }
     /* ===== Sidebar ===== */
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div,
-    [data-testid="stSidebarContent"] {{
-        background: {sidebar_bg} !important;
-        color: {text_color} !important;
-    }}
+    [data-testid="stSidebarContent"] {
+        background: #111827 !important;
+        color: #FAFAFA !important;
+    }
     [data-testid="stSidebar"] *, [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] div {{
-        color: {text_color} !important;
-    }}
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] div {
+        color: #FAFAFA !important;
+    }
     /* ===== All inputs ===== */
     [data-testid="stDateInput"] input, [data-testid="stNumberInput"] input,
     [data-testid="stTextInput"] input, [data-baseweb="input"] input,
     [data-baseweb="base-input"] input, [data-testid="stSidebar"] input,
-    [data-testid="stSidebar"] textarea {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        -webkit-text-fill-color: {text_color} !important;
-        border: 1px solid {border_color} !important;
+    [data-testid="stSidebar"] textarea {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        -webkit-text-fill-color: #FAFAFA !important;
+        border: 1px solid #30363D !important;
         border-radius: 8px !important;
         box-shadow: none !important;
-    }}
+    }
     [data-testid="stDateInput"] [data-baseweb="input"],
     [data-testid="stNumberInput"] [data-baseweb="input"],
     [data-testid="stTextInput"] [data-baseweb="input"],
     [data-testid="stSidebar"] [data-baseweb="input"],
-    [data-testid="stSidebar"] [data-baseweb="base-input"] {{
-        background: {secondary_bg} !important;
-        border: 1px solid {border_color} !important;
-    }}
-    [data-testid="stDateInput"] svg, [data-testid="stSidebar"] svg {{
-        fill: {text_color} !important;
-    }}
+    [data-testid="stSidebar"] [data-baseweb="base-input"] {
+        background: #161B22 !important;
+        border: 1px solid #30363D !important;
+    }
+    [data-testid="stDateInput"] svg, [data-testid="stSidebar"] svg {
+        fill: #FAFAFA !important;
+    }
     /* ===== Buttons ===== */
     [data-testid="stSidebar"] button,
     [data-testid="stSidebar"] .stButton > button,
-    [data-testid="stSidebar"] [data-testid="baseButton-secondary"] {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border: 1px solid {border_color} !important;
+    [data-testid="stSidebar"] [data-testid="baseButton-secondary"] {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border: 1px solid #30363D !important;
         border-radius: 8px !important;
         box-shadow: none !important;
-    }}
-    [data-testid="stSidebar"] button:hover {{
+    }
+    [data-testid="stSidebar"] button:hover {
         filter: brightness(0.95) !important;
-    }}
-    button[kind="primary"], .stButton > button[kind="primary"] {{ color: white !important; }}
+    }
+    button[kind="primary"], .stButton > button[kind="primary"] { color: white !important; }
     /* ===== Selectboxes ===== */
     [data-baseweb="select"] > div,
-    [data-testid="stSidebar"] [data-baseweb="select"] > div {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border: 1px solid {border_color} !important;
-    }}
-    [data-baseweb="select"] * {{ color: {text_color} !important; }}
+    [data-testid="stSidebar"] [data-baseweb="select"] > div {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border: 1px solid #30363D !important;
+    }
+    [data-baseweb="select"] * { color: #FAFAFA !important; }
     /* ===== Metrics ===== */
-    div[data-testid="stMetric"] {{
-        background: {secondary_bg} !important;
-        border: 1px solid {border_color} !important;
+    div[data-testid="stMetric"] {
+        background: #161B22 !important;
+        border: 1px solid #30363D !important;
         border-radius: 12px !important;
         padding: 0.5rem 0.75rem !important;
-    }}
-    div[data-testid="stMetric"] label, div[data-testid="stMetric"] div {{ color: {text_color} !important; }}
+    }
+    div[data-testid="stMetric"] label, div[data-testid="stMetric"] div { color: #FAFAFA !important; }
     /* ===== Tabs ===== */
-    .stTabs [data-baseweb="tab"] {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
+    .stTabs [data-baseweb="tab"] {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
         border-radius: 8px 8px 0 0 !important;
-        border: 1px solid {border_color} !important;
-    }}
-    .stTabs [aria-selected="true"] {{ background: {bg_color} !important; }}
+        border: 1px solid #30363D !important;
+    }
+    .stTabs [aria-selected="true"] { background: #0E1117 !important; }
     /* ===== DataFrames ===== */
-    [data-testid="stDataFrame"], [data-testid="stDataFrame"] > div {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
+    [data-testid="stDataFrame"], [data-testid="stDataFrame"] > div {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
         border-radius: 10px !important;
-    }}
+    }
     [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td,
-    .stTable th, .stTable td {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border-color: {border_color} !important;
-    }}
+    .stTable th, .stTable td {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border-color: #30363D !important;
+    }
     /* ===== Info boxes ===== */
-    [data-testid="stInfo"], .stAlert, div[data-baseweb="notification"] {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border: 1px solid {border_color} !important;
+    [data-testid="stInfo"], .stAlert, div[data-baseweb="notification"] {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border: 1px solid #30363D !important;
         border-radius: 10px !important;
-    }}
-    [data-testid="stInfo"] *, .stAlert * {{ color: {text_color} !important; }}
+    }
+    [data-testid="stInfo"] *, .stAlert * { color: #FAFAFA !important; }
     /* ===== Code blocks ===== */
     pre, code, .stCodeBlock, [data-testid="stMarkdownContainer"] pre,
-    [data-testid="stMarkdownContainer"] code {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border: 1px solid {border_color} !important;
+    [data-testid="stMarkdownContainer"] code {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border: 1px solid #30363D !important;
         border-radius: 8px !important;
-    }}
+    }
     /* ===== Expanders ===== */
-    [data-testid="stExpander"] details, [data-testid="stExpander"] summary {{
-        background: {secondary_bg} !important;
-        color: {text_color} !important;
-        border-color: {border_color} !important;
-    }}
+    [data-testid="stExpander"] details, [data-testid="stExpander"] summary {
+        background: #161B22 !important;
+        color: #FAFAFA !important;
+        border-color: #30363D !important;
+    }
     /* ===== Markdown text ===== */
     [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
     [data-testid="stMarkdownContainer"] li, [data-testid="stMarkdownContainer"] span,
-    [data-testid="stMarkdownContainer"] strong {{ color: {text_color} !important; }}
+    [data-testid="stMarkdownContainer"] strong { color: #FAFAFA !important; }
     /* ===== Plotly containers ===== */
     [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div,
-    [data-testid="stPlotlyChart"] .main-svg {{ background: transparent !important; }}
+    [data-testid="stPlotlyChart"] .main-svg { background: transparent !important; }
     /* ===== Hide Streamlit toolbar & branding completely ===== */
-    header[data-testid="stHeader"] {{
+    header[data-testid="stHeader"] {
         height: 0px !important;
         min-height: 0px !important;
         visibility: hidden !important;
-    }}
+    }
     #MainMenu, footer, [data-testid="stToolbar"],
-    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {{
+    [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
         display: none !important;
         visibility: hidden !important;
-    }}
+    }
     /* ===== Fix tooltip dots ===== */
     [data-testid="stTooltipHoverTarget"] button,
     [data-testid="tooltipHoverTarget"] button,
     button[aria-label="Learn more"],
-    [data-baseweb="tooltip"] button {{
+    [data-baseweb="tooltip"] button {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-    }}
+    }
     [data-testid="stTooltipHoverTarget"] svg,
-    [data-testid="tooltipHoverTarget"] svg {{
-        fill: {text_color} !important;
-        color: {text_color} !important;
-    }}
+    [data-testid="tooltipHoverTarget"] svg {
+        fill: #FAFAFA !important;
+        color: #FAFAFA !important;
+    }
     /* ===== Tooltip icons ===== */
     [data-testid="stTooltipIcon"], [data-testid="stTooltipIcon"] svg,
     button[data-testid="stTooltipIcon"], .stTooltipIcon svg,
-    [data-testid="stSidebar"] [data-testid="stTooltipIcon"] {{
-        color: {text_color} !important;
-        fill: {text_color} !important;
-        stroke: {text_color} !important;
-    }}
+    [data-testid="stSidebar"] [data-testid="stTooltipIcon"] {
+        color: #FAFAFA !important;
+        fill: #FAFAFA !important;
+        stroke: #FAFAFA !important;
+    }
     /* ===== HR ===== */
-    hr {{ border-color: {border_color}; }}
+    hr { border-color: #30363D; }
     /* ===== Verdict banners ===== */
-    .verdict-strong, .verdict-moderate, .verdict-weak {{
+    .verdict-strong, .verdict-moderate, .verdict-weak {
         color: #FFFFFF !important; padding: 12px 16px; border-radius: 6px; margin: 8px 0;
-    }}
-    .verdict-strong *, .verdict-moderate *, .verdict-weak * {{ color: #FFFFFF !important; }}
-    .verdict-strong {{ background: {"#1a4731" if dark_mode else "#166534"}; border-left: 4px solid #00d4aa; }}
-    .verdict-moderate {{ background: {"#3d3010" if dark_mode else "#92400e"}; border-left: 4px solid #ffa500; }}
-    .verdict-weak {{ background: {"#3d1010" if dark_mode else "#991b1b"}; border-left: 4px solid #ff4b4b; }}
+    }
+    .verdict-strong *, .verdict-moderate *, .verdict-weak * { color: #FFFFFF !important; }
+    .verdict-strong { background: #1a4731; border-left: 4px solid #00d4aa; }
+    .verdict-moderate { background: #3d3010; border-left: 4px solid #ffa500; }
+    .verdict-weak { background: #3d1010; border-left: 4px solid #ff4b4b; }
     /* ===== Guide box ===== */
-    .guide-box {{ background: {secondary_bg}; color: {text_color}; border: 1px solid {border_color}; padding: 16px; border-radius: 8px; margin: 8px 0; }}
+    .guide-box { background: #161B22; color: #FAFAFA; border: 1px solid #30363D; padding: 16px; border-radius: 8px; margin: 8px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -238,7 +234,7 @@ PRESETS = {
 # Sidebar
 # ──────────────────────────────────────────────────────────────────────────────
 # ── Top banner ──
-st.markdown(f"""
+st.markdown("""
 <div style="
     background: linear-gradient(90deg, #00d4aa 0%, #0066ff 100%);
     padding: 18px 28px;
@@ -253,20 +249,13 @@ st.markdown(f"""
         <p style="color: rgba(255,255,255,0.85); margin: 4px 0 0 0; font-size: 14px;">AI-Powered Personal Trading System</p>
     </div>
     <div style="color: rgba(255,255,255,0.7); font-size: 13px; text-align: right;">
-        {'🌙 Dark Mode' if dark_mode else '☀️ Light Mode'}
+        🌙 Dark Mode
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 st.sidebar.title("📈 Trading Alpha")
 st.sidebar.caption("Your Personal AI Trading System")
-
-# Theme toggle
-col_t1, col_t2 = st.sidebar.columns([1, 1])
-if col_t1.button("☀️ Light" if dark_mode else "🌙 Dark", use_container_width=True):
-    st.session_state["dark_mode"] = not st.session_state["dark_mode"]
-    st.rerun()
-
 st.sidebar.divider()
 
 # Quick Start presets
