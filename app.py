@@ -12,6 +12,13 @@ import yfinance as yf
 
 from strategy_simple import STRATEGY_REGISTRY, build_strategy, BUY, SELL
 from backtest_simple import run_backtest, compare_strategies, results_to_df, BacktestResult
+try:
+    from strategy_pro import PRO_STRATEGY_REGISTRY, build_pro_strategy
+    COMBINED_REGISTRY = {**STRATEGY_REGISTRY, **PRO_STRATEGY_REGISTRY}
+except ImportError:
+    PRO_STRATEGY_REGISTRY = {}
+    COMBINED_REGISTRY = STRATEGY_REGISTRY
+    build_pro_strategy = None
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Page config
@@ -292,8 +299,8 @@ end_date = col2.date_input("To", value=date.today() - timedelta(days=1))
 with st.sidebar.expander("🧠 Strategy & Parameters", expanded=True):
     strategy_name = st.selectbox(
         "Strategy",
-        list(STRATEGY_REGISTRY.keys()),
-        index=list(STRATEGY_REGISTRY.keys()).index(preset.get("strategy", "MovingAverageCrossover")) if preset.get("strategy") in STRATEGY_REGISTRY else 0,
+        list(COMBINED_REGISTRY.keys()),
+        index=list(COMBINED_REGISTRY.keys()).index(preset.get("strategy", "MovingAverageCrossover")) if preset.get("strategy") in STRATEGY_REGISTRY else 0,
         help="The trading rule the system will follow. Each strategy has a different approach to deciding when to buy and sell."
     )
 
@@ -307,8 +314,8 @@ with st.sidebar.expander("🧠 Strategy & Parameters", expanded=True):
     }
     st.caption(strategy_descriptions.get(strategy_name, ""))
 
-    param_defs = STRATEGY_REGISTRY[strategy_name]["param_defs"]
-    default_params = STRATEGY_REGISTRY[strategy_name]["default_params"]
+    param_defs = COMBINED_REGISTRY.get(strategy_name, {}).get("param_defs", {})
+    default_params = COMBINED_REGISTRY.get(strategy_name, {}).get("default_params", {})
     preset_params = preset.get("params", {})
     user_params = {}
 
@@ -381,7 +388,10 @@ with tab1:
     if run_btn:
         with st.spinner(f"Testing {strategy_name} on {symbol}..."):
             try:
-                strategy = build_strategy(strategy_name, **user_params)
+                if strategy_name in PRO_STRATEGY_REGISTRY and build_pro_strategy:
+                        strategy = build_pro_strategy(strategy_name, **user_params)
+                else:
+                        strategy = build_strategy(strategy_name, **user_params)
                 result = run_backtest(
                     symbol, strategy, str(start_date), str(end_date),
                     capital, 0.001, 0.001,
@@ -638,7 +648,7 @@ with tab4:
     col1, col2 = st.columns(2)
     with col1:
         val_symbol = st.text_input("Symbol", value=symbol, key="val_sym")
-        val_strategy_name = st.selectbox("Strategy", list(STRATEGY_REGISTRY.keys()), key="val_strat")
+        val_strategy_name = st.selectbox("Strategy", list(COMBINED_REGISTRY.keys()), key="val_strat")
     with col2:
         val_splits = st.slider("Number of test periods", 3, 8, 4,
                                help="More periods = more thorough test. 4-5 is recommended.")
