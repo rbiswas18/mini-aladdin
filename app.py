@@ -38,101 +38,144 @@ text_color = "#FAFAFA" if dark_mode else "#111827"
 muted_text = "#C9D1D9" if dark_mode else "#4B5563"
 border_color = "#30363D" if dark_mode else "#D1D5DB"
 
-st.markdown(
-    f"""
-    <style>
-        .stApp {{
-            background-color: {bg_color};
-            color: {text_color};
-        }}
-        .stApp, .stApp p, .stApp span, .stApp label, .stApp div {{
-            color: {text_color};
-        }}
-        section[data-testid="stSidebar"] {{
-            background-color: {sidebar_bg};
-            color: {text_color};
-            border-right: 1px solid {border_color};
-        }}
-        section[data-testid="stSidebar"] * {{
-            color: {text_color};
-        }}
-        .stMarkdown, .stText, .stCaption, label, p, span {{
-            color: {text_color};
-        }}
-        div[data-testid="stMetric"] {{
-            background-color: {secondary_bg};
-            border: 1px solid {border_color};
-            border-radius: 12px;
-            padding: 0.5rem 0.75rem;
-        }}
-        div[data-testid="stMetric"] label,
-        div[data-testid="stMetric"] div {{
-            color: {text_color};
-        }}
-        .stDataFrame, .stTable {{
-            background-color: {secondary_bg};
-            color: {text_color};
-            border-radius: 8px;
-        }}
-        .stTabs [data-baseweb="tab"] {{
-            background-color: {secondary_bg};
-            color: {text_color};
-            border-radius: 8px 8px 0 0;
-            border: 1px solid {border_color};
-        }}
-        .stTabs [aria-selected="true"] {{
-            background-color: {bg_color};
-            color: {text_color};
-        }}
-        .stSelectbox > div > div,
-        .stNumberInput > div > div > input,
-        .stTextInput > div > div > input,
-        textarea {{
-            background-color: {secondary_bg} !important;
-            color: {text_color} !important;
-            border: 1px solid {border_color} !important;
-        }}
-        .stSelectbox [data-baseweb="select"] > div {{
-            background-color: {secondary_bg} !important;
-            color: {text_color} !important;
-            border-color: {border_color} !important;
-        }}
-        section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]) {{
-            background-color: {secondary_bg} !important;
-            color: {text_color} !important;
-            border: 1px solid {border_color} !important;
-            border-radius: 10px !important;
-            box-shadow: none !important;
-        }}
-        section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]):hover {{
-            background-color: {"#1F2937" if dark_mode else "#E8EEF7"} !important;
-            color: {text_color} !important;
-        }}
-        hr {{ border-color: {border_color}; }}
-        .guide-box {{
-            background: {secondary_bg};
-            color: {text_color};
-            border: 1px solid {border_color};
-            padding: 16px;
-            border-radius: 8px;
-            margin: 8px 0;
-        }}
-        .verdict-strong, .verdict-moderate, .verdict-weak {{
-            color: #FFFFFF !important;
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin: 8px 0;
-        }}
-        .verdict-strong * , .verdict-moderate * , .verdict-weak * {{
-            color: #FFFFFF !important;
-        }}
-        .verdict-strong {{ background: {"#1a4731" if dark_mode else "#166534"}; border-left: 4px solid #00d4aa; }}
-        .verdict-moderate {{ background: {"#3d3010" if dark_mode else "#92400e"}; border-left: 4px solid #ffa500; }}
-        .verdict-weak {{ background: {"#3d1010" if dark_mode else "#991b1b"}; border-left: 4px solid #ff4b4b; }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown(f"""
+<style>
+    /* ===== Global app surfaces ===== */
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"],
+    .main, section.main, .block-container {{
+        background: {bg_color} !important;
+        color: {text_color} !important;
+    }}
+    /* ===== Sidebar ===== */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebarContent"] {{
+        background: {sidebar_bg} !important;
+        color: {text_color} !important;
+    }}
+    [data-testid="stSidebar"] *, [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] div {{
+        color: {text_color} !important;
+    }}
+    /* ===== All inputs ===== */
+    [data-testid="stDateInput"] input, [data-testid="stNumberInput"] input,
+    [data-testid="stTextInput"] input, [data-baseweb="input"] input,
+    [data-baseweb="base-input"] input, [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] textarea {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        -webkit-text-fill-color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }}
+    [data-testid="stDateInput"] [data-baseweb="input"],
+    [data-testid="stNumberInput"] [data-baseweb="input"],
+    [data-testid="stTextInput"] [data-baseweb="input"],
+    [data-testid="stSidebar"] [data-baseweb="input"],
+    [data-testid="stSidebar"] [data-baseweb="base-input"] {{
+        background: {secondary_bg} !important;
+        border: 1px solid {border_color} !important;
+    }}
+    [data-testid="stDateInput"] svg, [data-testid="stSidebar"] svg {{
+        fill: {text_color} !important;
+    }}
+    /* ===== Buttons ===== */
+    [data-testid="stSidebar"] button,
+    [data-testid="stSidebar"] .stButton > button,
+    [data-testid="stSidebar"] [data-testid="baseButton-secondary"] {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }}
+    [data-testid="stSidebar"] button:hover {{
+        filter: brightness(0.95) !important;
+    }}
+    button[kind="primary"], .stButton > button[kind="primary"] {{ color: white !important; }}
+    /* ===== Selectboxes ===== */
+    [data-baseweb="select"] > div,
+    [data-testid="stSidebar"] [data-baseweb="select"] > div {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+    }}
+    [data-baseweb="select"] * {{ color: {text_color} !important; }}
+    /* ===== Metrics ===== */
+    div[data-testid="stMetric"] {{
+        background: {secondary_bg} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem !important;
+    }}
+    div[data-testid="stMetric"] label, div[data-testid="stMetric"] div {{ color: {text_color} !important; }}
+    /* ===== Tabs ===== */
+    .stTabs [data-baseweb="tab"] {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border-radius: 8px 8px 0 0 !important;
+        border: 1px solid {border_color} !important;
+    }}
+    .stTabs [aria-selected="true"] {{ background: {bg_color} !important; }}
+    /* ===== DataFrames ===== */
+    [data-testid="stDataFrame"], [data-testid="stDataFrame"] > div {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border-radius: 10px !important;
+    }}
+    [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td,
+    .stTable th, .stTable td {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border-color: {border_color} !important;
+    }}
+    /* ===== Info boxes ===== */
+    [data-testid="stInfo"], .stAlert, div[data-baseweb="notification"] {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 10px !important;
+    }}
+    [data-testid="stInfo"] *, .stAlert * {{ color: {text_color} !important; }}
+    /* ===== Code blocks ===== */
+    pre, code, .stCodeBlock, [data-testid="stMarkdownContainer"] pre,
+    [data-testid="stMarkdownContainer"] code {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 8px !important;
+    }}
+    /* ===== Expanders ===== */
+    [data-testid="stExpander"] details, [data-testid="stExpander"] summary {{
+        background: {secondary_bg} !important;
+        color: {text_color} !important;
+        border-color: {border_color} !important;
+    }}
+    /* ===== Markdown text ===== */
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li, [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] strong {{ color: {text_color} !important; }}
+    /* ===== Plotly containers ===== */
+    [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div,
+    [data-testid="stPlotlyChart"] .main-svg {{ background: transparent !important; }}
+    /* ===== HR ===== */
+    hr {{ border-color: {border_color}; }}
+    /* ===== Verdict banners ===== */
+    .verdict-strong, .verdict-moderate, .verdict-weak {{
+        color: #FFFFFF !important; padding: 12px 16px; border-radius: 6px; margin: 8px 0;
+    }}
+    .verdict-strong *, .verdict-moderate *, .verdict-weak * {{ color: #FFFFFF !important; }}
+    .verdict-strong {{ background: {"#1a4731" if dark_mode else "#166534"}; border-left: 4px solid #00d4aa; }}
+    .verdict-moderate {{ background: {"#3d3010" if dark_mode else "#92400e"}; border-left: 4px solid #ffa500; }}
+    .verdict-weak {{ background: {"#3d1010" if dark_mode else "#991b1b"}; border-left: 4px solid #ff4b4b; }}
+    /* ===== Guide box ===== */
+    .guide-box {{ background: {secondary_bg}; color: {text_color}; border: 1px solid {border_color}; padding: 16px; border-radius: 8px; margin: 8px 0; }}
+</style>
+""", unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Quick Start Presets
