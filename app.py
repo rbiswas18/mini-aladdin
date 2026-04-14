@@ -169,6 +169,7 @@ st.set_page_config(
     page_title="Trading Alpha System",
     page_icon="📈",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1141,7 +1142,7 @@ with tab7:
 
     col3, col4 = st.columns(2)
     run_analysis = col3.button("🔍 Run Full Analysis", type="primary", use_container_width=True)
-    run_optimize = col4.button("⚡ Optimize Parameters", use_container_width=True)
+    run_optimize = col4.button("⚡ Optimize Parameters", use_container_width=True, help="Auto-find the best strategy settings for this stock")
 
     try:
         from adaptive_learner import AdaptiveLearner, LearningJournal
