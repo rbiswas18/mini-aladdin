@@ -5,6 +5,8 @@ Run with: streamlit run app.py
 """
 
 from datetime import date, timedelta
+import subprocess
+import sys
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -55,50 +57,76 @@ POPULAR_STOCKS = {
 TICKER_TO_NAME = {v: k for k, v in POPULAR_STOCKS.items()}
 
 
-@st.cache_data(ttl=86400)  # Cache for 24 hours
+@st.cache_data(ttl=86400)
 def load_stock_universe() -> dict:
-    """
-    Load S&P 500 + NASDAQ 100 + popular stocks from free sources.
-    Returns dict: {company_name: ticker}
-    Falls back to POPULAR_STOCKS if fetch fails.
-    """
-    import pandas as pd
-    import urllib.request
+    """Load 500+ stocks from S&P 500 Wikipedia list. Falls back to popular stocks."""
+    universe = dict(POPULAR_STOCKS)
 
-    universe = dict(POPULAR_STOCKS)  # Start with hardcoded popular stocks
+    def _ensure_html_parser() -> None:
+        try:
+            import lxml  # noqa: F401
+            return
+        except Exception:
+            pass
+        try:
+            import html5lib  # noqa: F401
+            return
+        except Exception:
+            pass
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "lxml", "html5lib"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=120,
+            )
+        except Exception:
+            pass
 
-    # Method 1: Fetch S&P 500 from Wikipedia
     try:
-        sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-        tables = pd.read_html(sp500_url)
-        sp500_df = tables[0]
-        # Columns: 'Symbol', 'Security', 'GICS Sector', etc.
-        for _, row in sp500_df.iterrows():
-            name = str(row.get('Security', '')).strip()
-            ticker = str(row.get('Symbol', '')).strip().replace('.', '-')
-            if name and ticker and len(ticker) <= 5:
-                universe[name] = ticker
+        import pandas as pd
+        _ensure_html_parser()
+        # S&P 500 from Wikipedia
+        tables = pd.read_html(
+            "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+            attrs={"id": "constituents"}
+        )
+        if tables:
+            df = tables[0]
+            for _, row in df.iterrows():
+                name = str(row.get("Security", "")).strip()
+                ticker = str(row.get("Symbol", "")).strip().replace(".", "-")
+                if name and ticker and 1 <= len(ticker) <= 6 and name != "nan":
+                    universe[name] = ticker
     except Exception:
-        pass  # Fall back to popular stocks
-
-    # Method 2: Fetch NASDAQ 100 from Wikipedia
-    try:
-        ndx_url = "https://en.wikipedia.org/wiki/Nasdaq-100"
-        tables = pd.read_html(ndx_url)
-        # Find the table with ticker info
-        for table in tables:
-            if 'Ticker' in table.columns or 'Symbol' in table.columns:
-                ticker_col = 'Ticker' if 'Ticker' in table.columns else 'Symbol'
-                name_col = 'Company' if 'Company' in table.columns else 'Security'
-                if name_col in table.columns:
-                    for _, row in table.iterrows():
-                        name = str(row.get(name_col, '')).strip()
-                        ticker = str(row.get(ticker_col, '')).strip().replace('.', '-')
-                        if name and ticker and len(ticker) <= 5 and name != 'nan':
-                            universe[name] = ticker
-                    break
-    except Exception:
-        pass
+        # Try alternate column names
+        try:
+            import pandas as pd
+            _ensure_html_parser()
+            tables = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
+            df = tables[0]
+            # Try common column name variations
+            name_col = next((c for c in df.columns if "security" in c.lower() or "company" in c.lower()), None)
+            tick_col = next((c for c in df.columns if "symbol" in c.lower() or "ticker" in c.lower()), None)
+            if name_col and tick_col:
+                for _, row in df.iterrows():
+                    name = str(row[name_col]).strip()
+                    ticker = str(row[tick_col]).strip().replace(".", "-")
+                    if name and ticker and 1 <= len(ticker) <= 6 and name != "nan":
+                        universe[name] = ticker
+        except Exception:
+            try:
+                backup_df = pd.read_csv(
+                    "https://datahub.io/core/s-and-p-500-companies/r/constituents.csv"
+                )
+                for _, row in backup_df.iterrows():
+                    name = str(row.get("Name", "")).strip()
+                    ticker = str(row.get("Symbol", "")).strip().replace(".", "-")
+                    if name and ticker and 1 <= len(ticker) <= 6 and name != "nan":
+                        universe[name] = ticker
+            except Exception:
+                pass
 
     return universe
 
@@ -359,7 +387,8 @@ st.markdown("""
 <div style="
     background: linear-gradient(90deg, #00d4aa 0%, #0066ff 100%);
     padding: 18px 28px;
-    border-radius: 12px;
+    border-radius: 0 0 12px 12px;
+    margin-top: -20px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
@@ -1265,9 +1294,22 @@ with tab8:
         pe_dry_run = st.checkbox("Dry Run (no real orders)", value=True, help="Safe mode, logs what it would do but places no orders")
 
     col3, col4, col5 = st.columns(3)
-    run_scan_btn = col3.button("🔍 Run Scan", type="primary", use_container_width=True)
-    check_stops_btn = col4.button("🛑 Check Stops", use_container_width=True)
-    get_status_btn = col5.button("📊 Get Status", use_container_width=True)
+    run_scan_btn = col3.button(
+        "🔍 Run Scan Now",
+        type="primary",
+        use_container_width=True,
+        help="Scan the current watchlist and generate fresh portfolio signals."
+    )
+    check_stops_btn = col4.button(
+        "🛑 Check Stop Losses",
+        use_container_width=True,
+        help="Review open positions and flag any stop-loss conditions."
+    )
+    get_status_btn = col5.button(
+        "📊 Get Portfolio Status",
+        use_container_width=True,
+        help="Show the latest portfolio engine status, positions, and readiness."
+    )
 
     try:
         from portfolio_engine import PortfolioEngine
