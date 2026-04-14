@@ -351,10 +351,16 @@ with tab1:
             def color_pnl(val):
                 color = "color: #00d4aa" if val > 0 else "color: #ff4b4b"
                 return color
-            st.dataframe(
-                result.trades.style.applymap(color_pnl, subset=["PnL", "Return %"]),
-                use_container_width=True
-            )
+            try:
+                st.dataframe(
+                    result.trades.style.map(color_pnl, subset=["PnL", "Return %"]),
+                    use_container_width=True
+                )
+            except AttributeError:
+                st.dataframe(
+                    result.trades.style.applymap(color_pnl, subset=["PnL", "Return %"]),
+                    use_container_width=True
+                )
         else:
             st.warning("No completed trades in this period. Try a longer date range or different strategy.")
 
