@@ -11,8 +11,8 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-from backtest import BacktestResult
-from strategy import STRATEGY_REGISTRY
+from backtest_simple import BacktestResult
+from strategy_simple import STRATEGY_REGISTRY
 
 load_dotenv()
 logger = logging.getLogger(__name__)

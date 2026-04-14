@@ -241,8 +241,9 @@ class RiskManager:
         self.open_positions = max(0, self.open_positions - 1)
         self.account_value += pnl
 
+        # Track daily losses separately (do NOT subtract from account again)
         if pnl < 0:
-            self.record_loss(abs(pnl))
+            self.daily_losses += abs(pnl)  # track for daily limit check only
 
         # Update peak
         if self.account_value > self.peak_value:

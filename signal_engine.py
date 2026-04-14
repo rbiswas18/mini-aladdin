@@ -15,7 +15,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from data_fetch import get_provider
-from strategy import build_strategy, STRATEGY_REGISTRY, BUY, SELL, HOLD
+from strategy_simple import build_strategy, STRATEGY_REGISTRY, BUY, SELL, HOLD
 
 load_dotenv()
 logger = logging.getLogger(__name__)

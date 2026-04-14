@@ -242,14 +242,17 @@ class RegimeAwareStrategy(Strategy):
 
         if self.use_regime:
             regime_series = self.regime_filter.get_regime_series(df)
-            # Zero out signals on non-bull days
+            # Only block NEW ENTRIES (BUY) on non-bull days
+            # NEVER block protective exits (SELL signals)
             non_bull_mask = regime_series != "BULL"
-            df.loc[non_bull_mask, "signal"] = HOLD
+            buy_mask = df["signal"] == BUY
+            df.loc[non_bull_mask & buy_mask, "signal"] = HOLD
             df["regime"] = regime_series
 
         if self.use_earnings_filter:
             for ts in df.index:
-                if df.loc[ts, "signal"] != HOLD:
+                # Only block BUY entries around earnings, never SELL exits
+                if df.loc[ts, "signal"] == BUY:
                     if self.earnings_filter.is_earnings_blackout(self.symbol, ts.date()):
                         df.loc[ts, "signal"] = HOLD
 

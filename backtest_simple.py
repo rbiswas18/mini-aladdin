@@ -64,6 +64,14 @@ def run_backtest(
         portfolio_value = cash + shares * row["Close"]
         equity_curve.append({"date": date, "value": portfolio_value})
 
+        # Stop loss / take profit check — must run BEFORE buy/sell logic
+        if shares > 0 and entry_price > 0:
+            change_pct = (row["Close"] - entry_price) / entry_price
+            if stop_loss_pct > 0 and change_pct <= -stop_loss_pct:
+                signal = SELL  # force exit on stop loss
+            elif take_profit_pct > 0 and change_pct >= take_profit_pct:
+                signal = SELL  # force exit on take profit
+
         # BUY
         if signal == BUY and shares == 0 and cash > 0:
             shares_to_buy = (cash * (1 - commission)) / price
@@ -72,15 +80,7 @@ def run_backtest(
             entry_date = date
             cash = 0.0
 
-        # Stop loss / take profit check
-        if shares > 0 and entry_price > 0:
-            change_pct = (row["Close"] - entry_price) / entry_price
-            if stop_loss_pct > 0 and change_pct <= -stop_loss_pct:
-                signal = SELL  # force exit
-            elif take_profit_pct > 0 and change_pct >= take_profit_pct:
-                signal = SELL  # force exit
-
-        # SELL
+        # SELL (includes forced stop-loss/take-profit exits)
         elif signal == SELL and shares > 0:
             sell_price = row["Close"] * (1 - slippage)
             proceeds = shares * sell_price * (1 - commission)
