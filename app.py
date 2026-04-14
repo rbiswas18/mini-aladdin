@@ -463,9 +463,14 @@ with tab4:
         val_symbol = st.text_input("Symbol", value=symbol, key="val_sym")
         val_strategy_name = st.selectbox("Strategy", list(STRATEGY_REGISTRY.keys()), key="val_strat")
     with col2:
-        val_splits = st.slider("Number of test periods", 3, 6, 4,
+        val_splits = st.slider("Number of test periods", 3, 8, 4,
                                help="More periods = more thorough test. 4-5 is recommended.")
         val_capital = st.number_input("Capital per period ($)", value=1200, min_value=500, key="val_cap")
+
+    val_years = st.slider(
+        "Years of history to test", 3, 20, 10,
+        help="More years = more reliable result. 10+ years is ideal. yfinance has data back to the 1990s for major stocks."
+    )
 
     if st.button("🔬 Run Validation Test", type="primary"):
         with st.spinner("Running validation... testing across multiple time periods..."):
@@ -476,7 +481,7 @@ with tab4:
                 val_results = validator.run(
                     symbol=val_symbol,
                     strategy=val_strategy,
-                    start_date=str(date.today() - timedelta(days=6*365)),
+                    start_date=str(date.today() - timedelta(days=val_years*365)),
                     end_date=str(date.today() - timedelta(days=1)),
                     n_splits=val_splits,
                     initial_capital=val_capital,
